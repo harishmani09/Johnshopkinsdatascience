@@ -1,25 +1,19 @@
 library(data.table)
-library(dplyr)
-library(lubridate)
+library(tidyverse)
 
-#download data
-url='https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip'
-download.file(url,destfile = 'household_power_consumption.zip',method='curl')
+NEI <- readRDS('exdata_data_NEI_data/summarySCC_PM25.rds')
+setDT(NEI)
+SCC <- readRDS('exdata_data_NEI_data/Source_Classification_Code.rds')
+setDT(SCC)
 
-#unzip file
-unzip(zipfile = 'household_power_consumption.zip')
 
-#read data using data.table::fread
-powerdata <- fread('household_power_consumption.txt',na.strings = "?")
+baltimore <- subset(NEI,fips=='24510')
+balt_emissions <- tapply(baltimore$Emissions, baltimore$year, sum)
 
-#subsetting the data bewteen dates 2007-02-01 and 2007-02-02
-reldata <- powerdata[power$Date %in% c("2007-02-01","2007-02-02"),]
+#set png parameters
+png(filename='plot2.png',width=480,height=480)
 
-#converting date column as POSIXct datetime column
-reldata[,dateTime := as.POSIXct(paste(Date,Time),format="%d/%m/%Y %H:%M:%S")] 
-
-#getting the plot 
-png("plot2.png",width = 480,height = 480)
-plot(x=reldata[,dateTime],y=reldata[,Global_active_power],type = "l",xlab="",ylab="Global_active_power(kilowatts)")
+#plot the graph using base method
+barplot(balt_emissions,xlab='year',ylab='PM2.5 Emissions(tons)',main='Total PM2.5 Emissions in Baltimore by Year')
 
 dev.off()

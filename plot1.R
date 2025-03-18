@@ -1,20 +1,25 @@
 library(data.table)
-library(dplyr)
-library(lubridate)
-#download data
-url='https://d396qusza40orc.cloudfront.net/exdata%2Fdata%2Fhousehold_power_consumption.zip'
-download.file(url,destfile = 'household_power_consumption.zip',method='curl')
+library(tidyverse)
 
-#unzip file
-unzip(zipfile = 'household_power_consumption.zip')
+NEI <- readRDS('exdata_data_NEI_data/summarySCC_PM25.rds')
+setDT(NEI)
+SCC <- readRDS('exdata_data_NEI_data/Source_Classification_Code.rds')
+setDT(SCC)
 
-powerdata <- fread('household_power_consumption.txt',na.strings = "?")
-head(powerdata)
-#selecting the target dates 2007-02-01 and 2007-02-02
-power <- powerdata |> mutate(Date = dmy(Date))
-reldata <- power |> filter(between(Date, as.Date('2007-02-01'),as.Date('2007-02-02')))
 
-png('plot1.png',width = 480,height = 480)
-#plot 1
-hist(reldata[,Global_active_power],main="Global Active Power",col='red',xlab = 'Global Active Power(kilowatts)',ylab='Frequency')
+
+# Question1
+
+#prevents histogram from printing in scientific notaitons
+NEI[,Emissions := lapply(.SD,as.numeric), .SDcols = c('Emissions')]
+
+totalNEI <- NEI[,lapply(.SD,sum,na.rm=TRUE),.SDcols = c('Emissions'),by=year]
+
+png(filename='plot1.png')
+
+barplot(totalNEI[,Emissions], 
+        names=totalNEI[,year],
+        xlab='Years',ylab='Emissions',
+        main='Emissions over the year'
+)
 dev.off()
